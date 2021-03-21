@@ -25,33 +25,20 @@ function setPageBackgroundColor() {
   innerDoc = iframe.contentDocument || iframe.contentWindow.document;
   const divs = innerDoc.querySelectorAll('body > div');
   const contentWrapper = divs[2];
-  let startSearch = true;
   const words = [];
-  contentWrapper.childNodes.forEach(node => {
-    if (startSearch) {
-      let queue = [node];
-      let current = null;
-      while (queue.length > 0) {
-        current = queue.shift();
-        if (current.tagName) {
-          if (
-            current.tagName === 'SPAN' &&
-            current.className !== 'page-break'
-          ) {
-            const { top } = current.getBoundingClientRect();
-            if (top >= 0 && top < window.innerHeight) {
-              words.push(current);
-            }
-          } else {
-            current.childNodes.forEach(child => queue.push(child));
-          }
-        }
+  contentWrapper.querySelectorAll('span').forEach(node => {
+    if (node.className !== 'page-break') {
+      const { top, bottom } = node.getBoundingClientRect();
+      console.log(node, top);
+      if (top >= -1 && top < window.innerHeight) {
+        words.push(node);
       }
     }
   });
   const readText = async () => {
-    console.log(words[0]);
     const originalStyle = words[0].style;
+    words[0].style.color = '#fbf0d9';
+    words[0].style.backgroundColor = '#9e9174';
     for (let i = 1; i < words.length; i++) {
       currentWord = await new Promise(resolve => {
         setTimeout(() => {
@@ -61,10 +48,9 @@ function setPageBackgroundColor() {
           const { top, bottom } = words[i].getBoundingClientRect();
           console.log(words[i], top, bottom);
           resolve();
-        }, 150);
+        }, 100 * (300 / 60));
       });
     }
   };
   readText();
-  console.log(words);
 }
