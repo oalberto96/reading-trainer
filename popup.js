@@ -11,6 +11,20 @@ changeColor.addEventListener('click', async () => {
 // The body of this function will be executed as a content script inside the
 // current page
 function setPageBackgroundColor() {
+  const getWordsFromDiv = div => {
+    const words = [];
+    div.querySelectorAll('span').forEach(node => {
+      const { top } = node.getBoundingClientRect();
+      if (node.className !== 'page-break') {
+        console.log(node, top);
+        if (top >= -1 && top < window.innerHeight) {
+          words.push(node);
+        }
+      }
+    });
+    return words;
+  };
+
   let readerIframe = document.getElementById('KindleReaderIFrame');
   let iframe = null;
   let innerDoc =
@@ -24,18 +38,15 @@ function setPageBackgroundColor() {
   }
   innerDoc = iframe.contentDocument || iframe.contentWindow.document;
   const divs = innerDoc.querySelectorAll('body > div');
-  const contentWrapper = divs[2];
-  const words = [];
-  contentWrapper.querySelectorAll('span').forEach(node => {
-    if (node.className !== 'page-break') {
-      const { top, bottom } = node.getBoundingClientRect();
-      console.log(node, top);
-      if (top >= -1 && top < window.innerHeight) {
-        words.push(node);
-      }
-    }
+  let words = [];
+
+  // Improve:
+  divs.forEach(contentWrapper => {
+    const auxWords = getWordsFromDiv(contentWrapper);
+    words = words.concat(auxWords);
   });
-  const readText = async () => {
+
+  const readText = async words => {
     const originalStyle = words[0].style;
     words[0].style.color = '#fbf0d9';
     words[0].style.backgroundColor = '#9e9174';
@@ -48,9 +59,9 @@ function setPageBackgroundColor() {
           const { top, bottom } = words[i].getBoundingClientRect();
           console.log(words[i], top, bottom);
           resolve();
-        }, 100 * (300 / 60));
+        }, 100 * (200 / 60));
       });
     }
   };
-  readText();
+  readText(words);
 }
